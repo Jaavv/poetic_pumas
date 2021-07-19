@@ -72,6 +72,7 @@ def get_top_lateral_of_active(data: element_data.ElementData) -> elements.LevelE
     top_lateral_position = get_lateral_of_active(data).position + Movement.UP
     return data.level.get_element_at_position(top_lateral_position)
 
+
 def get_toptop_lateral_of_active(data: element_data.ElementData) -> elements.LevelElement:
     """..."""
     top_lateral_position = get_lateral_of_active(data).position + Movement.UP + Movement.UP
@@ -86,6 +87,7 @@ def is_block(element: elements.LevelElement) -> bool:
 def is_space(element: elements.LevelElement) -> bool:
     """Whether the element is a block."""
     return isinstance(element, elements.Space)
+
 
 def is_door(element: elements.LevelElement) -> bool:
     """Whether the element is a block."""
@@ -106,7 +108,7 @@ class DudeController(Controller):
 
     def __init__(self):
         super().__init__()
-        self.carrying: Optional[elements.ControllableLevelElement] = None
+        self.carrying_element: Optional[elements.ControllableLevelElement] = None
         self.is_carrying: bool = False
 
     def move(
@@ -117,16 +119,15 @@ class DudeController(Controller):
         """Moves the selected element around the map"""
         active_element = data.active_element
         facing = active_element.facing
-        lateral_element = get_lateral_of_active(data)
-        head_element = get_head_of_active(data)
         top_lateral_element = get_top_lateral_of_active(data)
         top_top = get_toptop_lateral_of_active(data)
-        
+        head_location = active_element.position + Movement.UP
+
         RigidBody.move_element(data, direction, data.active_element)
 
         if self.is_carrying:
             if is_clear_for_action(top_lateral_element):
-                RigidBody.move_element_to_destination(data, active_element.position + Movement.UP, self.carrying_element)
+                RigidBody.move_element_to_destination(data, head_location, self.carrying_element)
 
             RigidBody.move_element(data, Movement.NONE, self.carrying_element)
 
@@ -142,7 +143,6 @@ class DudeController(Controller):
 
     def move_left(self, data: element_data.ElementData) -> None:
         """Move this level element leftward according to the rules.
-
         If there are any objects to the left of block dude, he cannot move left.
         """
         self.move(data, Movement.LEFT)
@@ -159,9 +159,9 @@ class DudeController(Controller):
         active_element = data.active_element
         facing = active_element.facing
         lateral_element = get_lateral_of_active(data)
-        top_lateral_element = get_top_lateral_of_active(data)
+        diagonal = get_top_lateral_of_active(data)
 
-        if not is_clear_for_action(lateral_element) and (is_space(top_lateral_element) or is_door(top_lateral_element)):
+        if not is_clear_for_action(lateral_element) and (is_space(diagonal) or is_door(diagonal)):
             self.move(data, facing + Movement.UP)
 
     def box_action(self, data: element_data.ElementData) -> None:
@@ -170,7 +170,7 @@ class DudeController(Controller):
         top_lateral_element = get_top_lateral_of_active(data)
         head_element = get_head_of_active(data)
 
-        if self.is_carrying: # drop block
+        if self.is_carrying:  # drop block
             if is_clear_for_action(
                 top_lateral_element
             ):
@@ -181,7 +181,7 @@ class DudeController(Controller):
                 self.carrying_element = None
                 self.is_carrying = False
 
-        else: # pickup block
+        else:  # pickup block
             if is_block(lateral_element) and is_clear_for_action(top_lateral_element, head_element):
                 RigidBody.move_element_to_destination(data, head_element.position, lateral_element)
                 data.soundboard.play_sfx("thud")
@@ -228,7 +228,6 @@ class TelekinesisController(Controller):
 
     def interact(self, data: element_data.ElementData):
         """Gives the controls back to blockdude
-
         Also drops the block before so that it doesn't float
         """
         data.soundboard.play_sfx("tele_drop")
@@ -236,7 +235,6 @@ class TelekinesisController(Controller):
         below = position + Movement.DOWN
         while isinstance(data.level.get_element_at_position(below), elements.Space):
             below += Movement.DOWN
-
         data.level.move_element(position, below+Movement.UP)
         dude = data.level.find_element(elements.Dude)
         data.level.set_active_element(dude)

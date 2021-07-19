@@ -14,11 +14,13 @@ TIMEOUT = 0.1
 
 levels_folder = os.listdir(path="src/resources/levels/")
 
+
 def clean_exit():
     while 1:
         interpreter = sys.executable
         os.system(f"{interpreter} blockdude.py")
         exit()
+
 
 def starting_level_from_script_args() -> str:
     """Takes the Python script input to jump to a particular level.

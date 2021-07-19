@@ -13,7 +13,6 @@ class RigidBody:
     @staticmethod
     def get_drop_position(data: element_data.ElementData, position: Vector2D) -> Vector2D:
         """Applies drop
-
         :param data: The element data
         :param position: Position of the element
         :return tuple of boolean successful drop and new position
@@ -47,9 +46,9 @@ class RigidBody:
     ) -> Vector2D:
         """Apply movement to an element."""
         destination = element.position + movement
-        destination_element = data.level.get_element_at_position(destination)
+        dest_element = data.level.get_element_at_position(destination)
 
-        if elements.space.is_space_element(destination_element) or elements.exitdoor.is_door_element(destination_element):
+        if elements.space.is_space_element(dest_element) or elements.exitdoor.is_door_element(dest_element):
             data.soundboard.play_sfx("step")
         else:
             destination = element.position

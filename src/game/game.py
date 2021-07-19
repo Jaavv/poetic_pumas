@@ -1,15 +1,12 @@
 from blessed.keyboard import Keystroke
 from blessed import Terminal
-
 from pathlib import Path
-
 from .element_data import ElementData
 from .input_handler import InputHandler
 from .level import Level
 from .level import create_level_from_file
 from .renderer import Renderer
 from .soundboard import Soundboard
-from .vector2D import Vector2D
 from ..elements.exitdoor import ExitDoor
 
 
@@ -45,13 +42,13 @@ class GameState:
 
     def game_state(self) -> None:
         """Checks near MAIN_CHARACTER position for exit door element"""
-        #TODO: if active element is dude
+        # TODO: if active element is dude
         if (self.level.active_element.position == self.winning_location):
             self.next_level()
             self.set_level()
 
     def next_level(self) -> None:
-        self.current_level +=1
+        self.current_level += 1
 
     def set_level(self) -> None:
         if self.current_level not in self.level_dict.keys():
@@ -64,7 +61,6 @@ class GameState:
             self.renderer.terminal.move_xy(0, 0)
             self.renderer = Renderer(terminal=Terminal(), level=self.level)
             self.element_data = ElementData(level=self.level, soundboard=self.soundboard)
-        
 
     def process_input(self, keystroke: Keystroke) -> None:
         """Takes the active element of the level and applies the input onto it."""
