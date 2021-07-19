@@ -5,6 +5,6 @@ WX.................W.
 WW..................W
 .W..........W..B....W
 .W..........WB.BBD..W
-.WWWWW..WWWWWWWWWWWWW
+.WWWWW...WWWWWWWWWWWW
 .....W..BW...........
 .....WWWWW...........

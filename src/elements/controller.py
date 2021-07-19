@@ -72,6 +72,11 @@ def get_top_lateral_of_active(data: element_data.ElementData) -> elements.LevelE
     top_lateral_position = get_lateral_of_active(data).position + Movement.UP
     return data.level.get_element_at_position(top_lateral_position)
 
+def get_toptop_lateral_of_active(data: element_data.ElementData) -> elements.LevelElement:
+    """..."""
+    top_lateral_position = get_lateral_of_active(data).position + Movement.UP + Movement.UP
+    return data.level.get_element_at_position(top_lateral_position)
+
 
 def is_block(element: elements.LevelElement) -> bool:
     """Whether the element is a block."""
@@ -82,10 +87,14 @@ def is_space(element: elements.LevelElement) -> bool:
     """Whether the element is a block."""
     return isinstance(element, elements.Space)
 
+def is_door(element: elements.LevelElement) -> bool:
+    """Whether the element is a block."""
+    return isinstance(element, elements.ExitDoor)
+
 
 def is_clear_for_action(*elements: elements.LevelElement) -> bool:
     """Ensures the area around the character is clear for picking up blocks."""
-    return all((is_space(element) for element in elements))
+    return all((is_space(element) or is_door(element) for element in elements))
 
 
 class DoNothingController:
@@ -98,6 +107,7 @@ class DudeController(Controller):
     def __init__(self):
         super().__init__()
         self.carrying: Optional[elements.ControllableLevelElement] = None
+        self.is_carrying: bool = False
 
     def move(
         self,
@@ -105,18 +115,30 @@ class DudeController(Controller):
         direction: Vector2D,
     ) -> None:
         """Moves the selected element around the map"""
-        # Move the carrying block as well
+        active_element = data.active_element
+        facing = active_element.facing
+        lateral_element = get_lateral_of_active(data)
+        head_element = get_head_of_active(data)
         top_lateral_element = get_top_lateral_of_active(data)
-        # lateral_element = get_lateral_of_active(data)
+        top_top = get_toptop_lateral_of_active(data)
+        
+        RigidBody.move_element(data, direction, data.active_element)
 
-        position = RigidBody.move_element(data, direction, data.active_element)
+        if self.is_carrying:
+            if is_clear_for_action(top_lateral_element):
+                RigidBody.move_element_to_destination(data, active_element.position + Movement.UP, self.carrying_element)
 
-        if self.carrying and is_clear_for_action(top_lateral_element):
-            # Check if we can move
-            block_position = RigidBody.move_element(data, direction, self.carrying)
+            RigidBody.move_element(data, Movement.NONE, self.carrying_element)
 
-            if (block_position - position).x:
-                self.carrying = None
+            if direction == Movement.UP + facing:
+                if not is_clear_for_action(top_lateral_element, top_top):
+                    self.carrying_element = None
+                    self.is_carrying = False
+
+            if direction == facing:
+                if not is_clear_for_action(top_lateral_element):
+                    self.carrying_element = None
+                    self.is_carrying = False
 
     def move_left(self, data: element_data.ElementData) -> None:
         """Move this level element leftward according to the rules.
@@ -137,16 +159,10 @@ class DudeController(Controller):
         active_element = data.active_element
         facing = active_element.facing
         lateral_element = get_lateral_of_active(data)
-        head_element = get_head_of_active(data)
+        top_lateral_element = get_top_lateral_of_active(data)
 
-        if not is_clear_for_action(lateral_element):
-            el = data.level.get_element_at_position(head_element.position + Movement.UP)
-            if not self.carrying and is_clear_for_action(head_element, el):
-                up_and_lateral_position = facing + Movement.UP
-                self.move(data, up_and_lateral_position)
-            elif self.carrying:
-                up_and_lateral_position = facing + Movement.UP
-                self.move(data, up_and_lateral_position)
+        if not is_clear_for_action(lateral_element) and is_space(top_lateral_element):
+            self.move(data, facing + Movement.UP)
 
     def box_action(self, data: element_data.ElementData) -> None:
         """The box action as picking up or dropping."""
@@ -154,23 +170,23 @@ class DudeController(Controller):
         top_lateral_element = get_top_lateral_of_active(data)
         head_element = get_head_of_active(data)
 
-        if not self.carrying:
-            if is_block(lateral_element) and is_clear_for_action(
-                top_lateral_element,
-                head_element,
+        if self.is_carrying: # drop block
+            if is_clear_for_action(
+                top_lateral_element
             ):
                 RigidBody.move_element_to_destination(
-                    data, head_element.position, lateral_element
+                    data, top_lateral_element.position, head_element
                 )
                 data.soundboard.play_sfx("pickup_square")
-                self.carrying = lateral_element
-        else:
-            # top lateral position is empty space, drop it
-            if is_clear_for_action(top_lateral_element):
-                facing = data.active_element.facing
-                RigidBody.move_element(data, facing, self.carrying)
+                self.carrying_element = None
+                self.is_carrying = False
+
+        else: # pickup block
+            if is_block(lateral_element) and is_clear_for_action(top_lateral_element, head_element):
+                RigidBody.move_element_to_destination(data, head_element.position, lateral_element)
                 data.soundboard.play_sfx("thud")
-                self.carrying = None
+                self.carrying_element = lateral_element
+                self.is_carrying = True
 
     def move_down(self, data: element_data.ElementData) -> None:
         """Move down action from command."""

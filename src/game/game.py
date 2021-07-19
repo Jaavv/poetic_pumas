@@ -3,6 +3,8 @@ from blessed import Terminal
 
 from pathlib import Path
 
+# from .movement import Movement
+
 from .element_data import ElementData
 from .input_handler import InputHandler
 from .level import Level
@@ -27,6 +29,7 @@ class GameState:
         self.soundboard = Soundboard()
         self.element_data = ElementData(level=self.level, soundboard=self.soundboard)
         self.current_level = 1
+        self.win = False
         self.level_dict = {
             1: "level-1.txt",
             2: "level-2.txt",
@@ -54,7 +57,7 @@ class GameState:
         ]
 
         if self.current_level == 0:
-            pass
+            self.current_level = 1
         else:
             for check in exit_checks:
                 if isinstance(self.level.get_element_at_position(check), ExitDoor):
@@ -62,15 +65,19 @@ class GameState:
                         return True
                     else:
                         self.current_level += 1
-                        self.level = create_level_from_file(
-                            level_file_name=self.level_dict[self.current_level],
-                            levels_directory=Path(__file__).parent.parent / Path("resources/levels"))
-                        self.renderer.terminal.move_xy(0, 0)
-                        for columns in range(self.renderer.terminal.width):
-                            for row in range(self.renderer.terminal.height):
-                                print(f"{self.renderer.terminal.normal} ")
-                        self.renderer = Renderer(terminal=Terminal(), level=self.level)
-                        self.element_data = ElementData(level=self.level, soundboard=self.soundboard)
+                        self.set_level()
+
+    def set_level(self) -> None:
+        self.level = create_level_from_file(
+            level_file_name=self.level_dict[self.current_level],
+            levels_directory=Path(__file__).parent.parent / Path("resources/levels"))
+        self.renderer.terminal.move_xy(0, 0)
+        for columns in range(self.renderer.terminal.width):
+            for row in range(self.renderer.terminal.height):
+                print(f"{self.renderer.terminal.normal} ")
+        self.renderer = Renderer(terminal=Terminal(), level=self.level)
+        self.element_data = ElementData(level=self.level, soundboard=self.soundboard)
+        
 
     def process_input(self, keystroke: Keystroke) -> None:
         """Takes the active element of the level and applies the input onto it."""
