@@ -21,7 +21,7 @@ class RigidBody:
         one_below = position + Movement.DOWN
         while elements.space.is_space_element(
             data.level.get_element_at_position(one_below)
-        ):
+        ) or elements.exitdoor.is_door_element(data.level.get_element_at_position(one_below)):
             one_below.add(Movement.DOWN)
 
         new_position = one_below + Movement.UP
@@ -49,7 +49,7 @@ class RigidBody:
         destination = element.position + movement
         destination_element = data.level.get_element_at_position(destination)
 
-        if elements.space.is_space_element(destination_element):
+        if elements.space.is_space_element(destination_element) or elements.exitdoor.is_door_element(destination_element):
             data.soundboard.play_sfx("step")
         else:
             destination = element.position

@@ -161,7 +161,7 @@ class DudeController(Controller):
         lateral_element = get_lateral_of_active(data)
         top_lateral_element = get_top_lateral_of_active(data)
 
-        if not is_clear_for_action(lateral_element) and is_space(top_lateral_element):
+        if not is_clear_for_action(lateral_element) and (is_space(top_lateral_element) or is_door(top_lateral_element)):
             self.move(data, facing + Movement.UP)
 
     def box_action(self, data: element_data.ElementData) -> None:
