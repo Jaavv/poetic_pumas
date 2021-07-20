@@ -121,11 +121,11 @@ class DudeController(Controller):
         facing = active_element.facing
         top_lateral_element = get_top_lateral_of_active(data)
         top_top = get_toptop_lateral_of_active(data)
-        head_location = active_element.position + Movement.UP
 
         RigidBody.move_element(data, direction, data.active_element)
 
         if self.is_carrying:
+            head_location = active_element.position + Movement.UP
             if is_clear_for_action(top_lateral_element):
                 RigidBody.move_element_to_destination(data, head_location, self.carrying_element)
 
